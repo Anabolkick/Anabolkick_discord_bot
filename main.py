@@ -172,6 +172,7 @@ async def play(ctx, *, url=''):
                 await ctx.send('**Now playing:** {}'.format(player.title))
 
             except Exception as e:
+                print(e.args)
                 print(e)
                 await ctx.send('Sorry, something went wrong')
                 await leave(ctx)
@@ -247,6 +248,5 @@ async def roll(ctx, *, max=100):
 
     rand = random.randrange(max)
     await ctx.send(f' `{ctx.message.author.name}` roll: `{rand}`')
-
 
 client.run(os.environ.get('BOT_TOKEN'))
