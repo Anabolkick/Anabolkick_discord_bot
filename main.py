@@ -16,7 +16,7 @@ ytdl_format_options = {
     'ignoreerrors': False,
     'logtostderr': False,
     'quiet': True,
-   # 'no_warnings': True,
+    'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
@@ -29,7 +29,7 @@ ytdl = YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
+    def __init__(self, source, *, data, volume=8):
         super().__init__(source, volume)
 
         self.data = data
@@ -54,10 +54,10 @@ def is_connected(ctx):
     voice_client = ctx.message.guild.voice_client
     return voice_client and voice_client.is_connected()
 
+prefix = '-'
+client = commands.Bot(command_prefix=prefix)
 
-client = commands.Bot(command_prefix='?')
-
-status = ['(-_-)!']
+status = ['{}:"_"{}', '}"_"{','{-_-}']
 queue = []
 loop = False
 
@@ -71,7 +71,7 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     channel = discord.utils.get(member.guild.channels, name='general')
-    await channel.send(f'Welcome {member.mention}! See `?help` command for details!')
+    await channel.send(f'Welcome {member.mention}! See `{prefix}help` command for details!')
 
 
 @client.command(name='ping', help='This command returns the latency')
@@ -129,12 +129,14 @@ async def play(ctx, *, url=''):
     global queue
     if url != '':
         queue.append(url)
+        await ctx.send(f'`{url}` added to queue!')
+
     if not ctx.message.author.voice:
         await ctx.send("You are not connected to a voice channel")
         return
 
-    elif len(queue) == 0:
-        await ctx.send('Nothing in your queue! Use `?queue` to add a song!')
+    elif len(queue) == 0 and not loop:
+        await ctx.send(f'Nothing in your queue! Use `{prefix}queue` to add a song!')
 
     else:
         try:
@@ -155,7 +157,7 @@ async def play(ctx, *, url=''):
         except AttributeError:
             pass
 
-        if len(queue) == 0:
+        if len(queue) == 0 and not loop:
             await leave(ctx)
             isEnd = True
         else:
@@ -172,11 +174,9 @@ async def play(ctx, *, url=''):
                 await ctx.send('**Now playing:** {}'.format(player.title))
 
             except Exception as e:
-                print(e.args)
                 print(e)
-                await ctx.send('Sorry, something went wrong')
-                await leave(ctx)
-                break
+                await ctx.send(f'Sorry, something went wrong with `{queue[0]}`')
+                del (queue[0])
 
 
 @client.command(name='volume', help='This command changes the bots volume')
@@ -204,12 +204,10 @@ async def resume(ctx):
     voice_channel.resume()
 
 
-@client.command(name='stop', help='This command stops the song!')
-async def stop(ctx):
-    server = ctx.message.guild
-    voice_channel = server.voice_client
-
-    voice_channel.stop()
+@client.command(name='clear', help='This command stops the song!')
+async def clear(ctx):
+    global queue
+    queue = []
 
 
 @client.command(name='queue')
@@ -219,6 +217,14 @@ async def queue_(ctx, *, url):
     queue.append(url)
     await ctx.send(f'`{url}` added to queue!')
 
+
+@client.command(name='skip')
+async def skip(ctx):
+    global queue
+
+    server = ctx.message.guild
+    voice_channel = server.voice_client
+    voice_channel.stop()
 
 @client.command(name='remove')
 async def remove(ctx, number):
@@ -232,8 +238,8 @@ async def remove(ctx, number):
         await ctx.send('Your queue is either **empty** or the index is **out of range**')
 
 
-@client.command(name='view', help='This command shows the queue')
-async def view(ctx):
+@client.command(name='show_queue', help='This command shows the queue')
+async def show_queue(ctx):
     await ctx.send(f'Your queue is now `{queue}!`')
 
 
@@ -250,3 +256,4 @@ async def roll(ctx, *, max=100):
     await ctx.send(f' `{ctx.message.author.name}` roll: `{rand}`')
 
 client.run(os.environ.get('BOT_TOKEN'))
+
