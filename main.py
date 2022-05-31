@@ -249,5 +249,5 @@ async def roll(ctx, *, max = 100):
     await ctx.send(f' `{ctx.message.author.name}` roll: `{rand}`')
 
 
-#client.run(os.environ.get('BOT_TOKEN'))
-client.run('OTgwOTE0NTcyNTQ0MzM5OTY4.G13QBc.39c-5VOHwmON5iXqQE_9fL8sxCagUDMZ6SKM44')
+client.run(os.environ.get('BOT_TOKEN'))
+
