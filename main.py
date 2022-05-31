@@ -7,7 +7,6 @@ import discord.voice_client
 from yt_dlp import YoutubeDL
 from random import choice
 
-
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -17,7 +16,7 @@ ytdl_format_options = {
     'ignoreerrors': False,
     'logtostderr': False,
     'quiet': True,
-    'no_warnings': True,
+   # 'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
@@ -126,7 +125,7 @@ async def loop_(ctx):
 
 
 @client.command(name='play', help='This command plays music')
-async def play(ctx, *, url = ''):
+async def play(ctx, *, url=''):
     global queue
     if url != '':
         queue.append(url)
@@ -143,7 +142,6 @@ async def play(ctx, *, url = ''):
             await channel.connect()
         except:
             pass
-
 
     server = ctx.message.guild
     voice_channel = server.voice_client
@@ -173,10 +171,12 @@ async def play(ctx, *, url = ''):
 
                 await ctx.send('**Now playing:** {}'.format(player.title))
 
-            except:
+            except Exception as e:
+                print(e)
                 await ctx.send('Sorry, something went wrong')
                 await leave(ctx)
                 break
+
 
 @client.command(name='volume', help='This command changes the bots volume')
 async def volume(ctx, volume: int):
@@ -242,7 +242,7 @@ async def change_status():
 
 
 @client.command(name='roll')
-async def roll(ctx, *, max = 100):
+async def roll(ctx, *, max=100):
     global queue
 
     rand = random.randrange(max)
@@ -250,4 +250,3 @@ async def roll(ctx, *, max = 100):
 
 
 client.run(os.environ.get('BOT_TOKEN'))
-
