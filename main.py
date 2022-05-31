@@ -3,6 +3,7 @@ import os
 import random
 import discord
 from discord.ext import commands, tasks
+from discord.ext.commands import has_permissions
 import discord.voice_client
 from yt_dlp import YoutubeDL
 from random import choice
@@ -29,7 +30,7 @@ ytdl = YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=8):
+    def __init__(self, source, *, data, volume=0.08):
         super().__init__(source, volume)
 
         self.data = data
@@ -59,7 +60,8 @@ client = commands.Bot(command_prefix=prefix)
 
 status = ['{}:"_"{}', '}"_"{','{-_-}']
 queue = []
-loop = False
+isLoop = False
+isShake = False
 
 
 @client.event
@@ -113,15 +115,15 @@ async def leave(ctx):
 
 @client.command(name='loop', help='This command toggles loop mode')
 async def loop_(ctx):
-    global loop
+    global isLoop
 
-    if loop:
+    if isLoop:
         await ctx.send('Loop mode is now `False!`')
-        loop = False
+        isLoop = False
 
     else:
         await ctx.send('Loop mode is now `True!`')
-        loop = True
+        isLoop = True
 
 
 @client.command(name='play', help='This command plays music')
@@ -135,7 +137,7 @@ async def play(ctx, *, url=''):
         await ctx.send("You are not connected to a voice channel")
         return
 
-    elif len(queue) == 0 and not loop:
+    elif len(queue) == 0 and not isLoop:
         await ctx.send(f'Nothing in your queue! Use `{prefix}queue` to add a song!')
 
     else:
@@ -157,7 +159,7 @@ async def play(ctx, *, url=''):
         except AttributeError:
             pass
 
-        if len(queue) == 0 and not loop:
+        if len(queue) == 0 and not isLoop:
             await leave(ctx)
             isEnd = True
         else:
@@ -166,7 +168,7 @@ async def play(ctx, *, url=''):
                     player = await YTDLSource.from_url(queue[0], loop=client.loop)
                     voice_channel.play(player)
 
-                    if loop:
+                    if isLoop:
                         queue.append(queue[0])
 
                     del (queue[0])
@@ -192,7 +194,6 @@ async def volume(ctx, volume: int):
 async def pause(ctx):
     server = ctx.message.guild
     voice_channel = server.voice_client
-
     voice_channel.pause()
 
 
@@ -200,7 +201,6 @@ async def pause(ctx):
 async def resume(ctx):
     server = ctx.message.guild
     voice_channel = server.voice_client
-
     voice_channel.resume()
 
 
@@ -209,19 +209,8 @@ async def clear(ctx):
     global queue
     queue = []
 
-
-@client.command(name='queue')
-async def queue_(ctx, *, url):
-    global queue
-
-    queue.append(url)
-    await ctx.send(f'`{url}` added to queue!')
-
-
 @client.command(name='skip')
 async def skip(ctx):
-    global queue
-
     server = ctx.message.guild
     voice_channel = server.voice_client
     voice_channel.stop()
@@ -231,15 +220,15 @@ async def remove(ctx, number):
     global queue
 
     try:
-        del (queue[int(number)])
+        del (queue[int(number)+1])
         await ctx.send(f'Your queue is now `{queue}!`')
 
     except:
         await ctx.send('Your queue is either **empty** or the index is **out of range**')
 
 
-@client.command(name='show_queue', help='This command shows the queue')
-async def show_queue(ctx):
+@client.command(name='queue', help='This command shows the queue')
+async def queue(ctx):
     await ctx.send(f'Your queue is now `{queue}!`')
 
 
@@ -251,9 +240,37 @@ async def change_status():
 @client.command(name='roll')
 async def roll(ctx, *, max=100):
     global queue
-
     rand = random.randrange(max)
     await ctx.send(f' `{ctx.message.author.name}` roll: `{rand}`')
+
+@client.command(name='shake')
+@has_permissions(manage_roles=True)
+async def shake(ctx, member: discord.Member, count = 3):
+    global isShake
+    isShake = True
+    channel_1 = client.get_channel(981343756294971403)
+    channel_2 = client.get_channel(981343795306176593)
+    cur_channel = member.voice.channel #return to channel
+    if count > 15:
+        count = 3
+    while count > 0 and isShake:
+        await asyncio.sleep(0.35)
+        await member.move_to(channel_1)
+        await member.move_to(channel_2)
+        count -= 1
+    await member.move_to(cur_channel)
+
+@client.command(name='stop_shake')
+async def stop_shake(ctx):
+    global isShake
+
+    if isShake:
+        await ctx.send('Shake mode is now `False!`')
+        isShake = False
+
+    else:
+        await ctx.send('Shake mode is now `True!`')
+        isShake = True
 
 client.run(os.environ.get('BOT_TOKEN'))
 
