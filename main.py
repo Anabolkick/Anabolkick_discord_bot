@@ -228,7 +228,7 @@ async def remove(ctx, number):
 
 
 @client.command(name='queue', help='This command shows the queue')
-async def queue(ctx):
+async def queue_(ctx):
     await ctx.send(f'Your queue is now `{queue}!`')
 
 
